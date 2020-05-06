@@ -42,7 +42,7 @@ app.post('/', (request, response) => {
             });
         }
         usuarioDB.password = ':D';
-        var token = jwt.sign({ usario: usuarioDB }, SEED, { expiresIn: 14400 });
+        var token = jwt.sign({ usuario: usuarioDB }, SEED, { expiresIn: 14400 });
 
         return response.status(200).json({
             usuario: usuarioDB,

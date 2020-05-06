@@ -18,8 +18,8 @@ exports.verificacionToken = function(request, response, next) {
                 errors: error
             });
         }
-
-        request.usuario = decoded.usuario;
+        request.usuario = decoded;
+        request.userIdentity = decoded.usuario._id;
         next();
 
     });

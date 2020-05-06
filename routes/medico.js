@@ -1,84 +1,83 @@
 // requires
 var express = require('express');
-var bcrypt = require('bcryptjs');
-var salt = bcrypt.genSaltSync(10);
-var hash = bcrypt.hashSync('B4c0/\/', salt);
-var jwt = require('jsonwebtoken');
-var middelwareAutentication = require('../middelwares/autenticacion');
+var middelware = require('../middelwares/autenticacion');
 var Usuario = require('../models/usuario');
+var Hospital = require('../models/hospital');
+var Medico = require('../models/medico');
 
 // Inicializar variables
 var app = express();
 
 
 //==========================================
-//Obtiene lista de usuarios
+//Obtiene lista de medicos
 //==========================================
 app.get('/', (request, response, next) => {
 
     var desde = request.query.desde || 0;
     desde = Number(desde);
 
-    Usuario.find({}, "nombre email img role")
+
+    Medico.find({})
         .limit(2)
         .skip(desde)
-        .exec((err, usuarios) => {
+        .populate('usuario', 'nombre email')
+        .populate('hospital')
+        .exec((err, medicos) => {
             if (err) {
                 return response.status(401).json({
-                    mensaje: 'error cargando usaurio',
+                    mensaje: 'error cargando medicos',
                     ok: false,
                     errors: err
                 });
             }
 
-            Usuario.count({}, (err, conteo) => {
+            Medico.count({}, (err, conteo) => {
 
                 if (err) {
                     return response.status(401).json({
-                        mensaje: 'error contato usaurio',
+                        mensaje: 'error contato medico',
                         ok: false,
                         errors: err
                     });
                 }
 
                 return response.status(200).json({
-                    usuarios: usuarios,
+                    medicos: medicos,
                     ok: true,
-                    totalUsuario: conteo
+                    totalMedico: conteo
                 });
             });
-
         });
 
 });
 
 
 //==========================================
-//crea nuevo usuario
+//crea nuevo medico
 //==========================================
-app.post('/', middelwareAutentication.verificacionToken, (request, response) => {
+app.post('/', middelware.verificacionToken, (request, response) => {
 
     var body = request.body;
 
-    var usuario = new Usuario({
+    var medico = new Medico({
         nombre: body.nombre,
-        email: body.email,
-        password: bcrypt.hashSync(body.password, 10),
         img: body.img,
-        role: body.role
+        usuario: request.userIdentity,
+        hospital: body.hospital
     });
 
-    usuario.save((err, usuarioGuardado) => {
+    medico.save((err, medicoGuardado) => {
         if (err) {
             return response.status(400).json({
-                mensaje: 'error al crear usaurio',
+                mensaje: 'error al crear medico',
                 ok: false,
                 errors: err
             });
         }
 
         return response.status(201).json({
-            usuario: usuarioGuardado,
+            medico: medicoGuardado,
             usuarioToken: request.usuario,
             ok: true,
         });
@@ -88,35 +87,36 @@ app.post('/', middelwareAutentication.verificacionToken, (request, response) => 
 });
 
 //==========================================
-//actualiazr nuevo usuario
+//actualiazr nuevo hospital
 //==========================================
-app.put('/:id', middelwareAutentication.verificacionToken, (request, response) => {
+app.put('/:id', middelware.verificacionToken, (request, response) => {
 
     var id = request.params.id;
     var body = request.body;
 
-    Usuario.findById(id, (err, usuario) => {
+    Medico.findById(id, (err, medico) => {
         if (err) {
             return response.status(500).json({
-                mensaje: 'error al buscar usuario',
+                mensaje: 'error al buscar medico',
                 ok: false,
                 errors: err
             });
         }
 
-        if (!usuario) {
+        if (!medico) {
             return response.status(400).json({
-                mensaje: 'usuario con id: ' + id + ' no existe',
+                mensaje: 'medico con id: ' + id + ' no existe',
                 ok: false,
-                errors: { message: 'usuario con id: ' + id + ' no existe' }
+                errors: { message: 'medico con id: ' + id + ' no existe' }
             });
         }
 
-        usuario.nombre = body.nombre;
-        usuario.email = body.email;
-        usuario.role = body.role;
+        medico.nombre = body.nombre;
+        medico.img = body.img;
+        medico.hospital = body.hospital;
+        medico.usuario = request.userIdentity;
 
-        usuario.save((err, usuarioGuardado) => {
+        medico.save((err, medicoGuardado) => {
             if (err) {
                 return response.status(400).json({
                     mensaje: 'error al actualizar usaurio',
@@ -124,9 +124,9 @@ app.put('/:id', middelwareAutentication.verificacionToken, (request, response) =
                     errors: err
                 });
             }
-            usuarioGuardado.password = ":)";
+
             return response.status(201).json({
-                usuario: usuarioGuardado,
+                medico: medicoGuardado,
                 ok: true,
             });
 
@@ -135,37 +135,36 @@ app.put('/:id', middelwareAutentication.verificacionToken, (request, response) =
 });
 
 //==========================================
-//borrar un usuario
+//borrar un hospital
 //==========================================
-app.delete('/:id', middelwareAutentication.verificacionToken, (request, response) => {
+app.delete('/:id', middelware.verificacionToken, (request, response) => {
 
     var id = request.params.id;
 
-    Usuario.findByIdAndDelete(id, (err, usuarioBorrado) => {
+    Medico.findByIdAndDelete(id, (err, medicoBorrado) => {
         if (err) {
             return response.status(500).json({
-                mensaje: 'error al borrar usuario',
+                mensaje: 'error al borrar medico',
                 ok: false,
                 errors: err
             });
         }
 
-        if (!usuarioBorrado) {
+        if (!medicoBorrado) {
             return response.status(400).json({
-                mensaje: 'usuario con id: ' + id + ' no existe, por lo tanto no se pudo eliminar',
+                mensaje: 'medico con id: ' + id + ' no existe, por lo tanto no se pudo eliminar',
                 ok: false,
-                errors: { message: 'usuario con id: ' + id + ' no existe, por lo tanto no se pudo eliminar' }
+                errors: { message: 'medico con id: ' + id + ' no existe, por lo tanto no se pudo eliminar' }
             });
         }
 
         return response.status(201).json({
-            usuario: usuarioBorrado,
+            medico: medicoBorrado,
             ok: true,
         });
 
 
     });
 });
-
 
 module.exports = app;
