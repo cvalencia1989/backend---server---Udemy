@@ -16,6 +16,7 @@ var usurioSchema = new Schema({
     password: { type: String, required: [true, 'la contraseña es obligatoria'] },
     img: { type: String, required: false },
     role: { type: String, required: true, default: 'USER_ROLES', enum: rolesValidados },
+    google: { type: Boolean, default: false },
 
 });
 
