@@ -84,7 +84,8 @@ async function verify(token) {
 app.post('/google', async(request, response) => {
 
     var token = request.body.token;
-    var googleUser = verify(token)
+
+    var googleUser = await verify(token)
         .catch(e => {
             return response.status(403).json({
                 mensaje: 'token no valido',
@@ -94,12 +95,12 @@ app.post('/google', async(request, response) => {
         });
 
     Usuario.findOne({ email: googleUser.email }, (error, usuarioDB) => {
-
-        if (err) {
+        console.log(googleUser.email)
+        if (error) {
             return response.status(500).json({
                 mensaje: 'error al loguear usuario',
                 ok: false,
-                errors: err
+                errors: error
             });
         }
 
@@ -137,7 +138,7 @@ app.post('/google', async(request, response) => {
                     return response.status(500).json({
                         mensaje: 'error al crear usuario desde google',
                         ok: false,
-                        errors: err
+                        errors: error
                     });
                 } else {
                     return response.status(201).json({

@@ -55,7 +55,7 @@ app.get('/', (request, response, next) => {
 //==========================================
 //crea nuevo usuario
 //==========================================
-app.post('/', middelwareAutentication.verificacionToken, (request, response) => {
+app.post('/', (request, response) => {
 
     var body = request.body;
 
